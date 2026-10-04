@@ -98,7 +98,8 @@ def frame_to_bytes(surface):
         if FB_BPP == 32:
             chans.append(np.full_like(chans[0], 255))
         raw = np.stack(chans, axis=2)
-    rows = raw.reshape(FB_H, -1).view(np.uint8)
+    raw = np.ascontiguousarray(raw)
+    rows = raw.view(np.uint8).reshape(FB_H, -1)
     if rows.shape[1] < FB_STRIDE:  # pad each line to the framebuffer stride
         pad = np.zeros((FB_H, FB_STRIDE - rows.shape[1]), dtype=np.uint8)
         rows = np.concatenate([rows, pad], axis=1)
