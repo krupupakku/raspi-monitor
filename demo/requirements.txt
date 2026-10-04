@@ -1,0 +1,4 @@
+# Demo-only dependencies (pygame-ce is a drop-in fork with wheels for recent Python versions)
+pygame-ce
+psutil
+numpy
