@@ -25,6 +25,11 @@ WIDTH, HEIGHT = 480, 320
 TOUCH_SWAP_XY = os.getenv("TOUCH_SWAP_XY", "0") == "1"
 TOUCH_INVERT_X = os.getenv("TOUCH_INVERT_X", "0") == "1"
 TOUCH_INVERT_Y = os.getenv("TOUCH_INVERT_Y", "0") == "1"
+# Resistive touch screen physical active bounds (typically 150..3950 instead of theoretical 0..4095)
+TOUCH_MIN_X = int(os.getenv("TOUCH_MIN_X", "150"))
+TOUCH_MAX_X = int(os.getenv("TOUCH_MAX_X", "3950"))
+TOUCH_MIN_Y = int(os.getenv("TOUCH_MIN_Y", "150"))
+TOUCH_MAX_Y = int(os.getenv("TOUCH_MAX_Y", "3950"))
 
 pygame.init()
 pygame.font.init()
@@ -53,8 +58,12 @@ def load_font(size):
 font_mono = load_font(17)
 font_btn = load_font(15)
 
-BTN_REBOOT = pygame.Rect(30, 260, 195, 45)
-BTN_POWEROFF = pygame.Rect(255, 260, 195, 45)
+BTN_REBOOT = pygame.Rect(30, 252, 195, 52)
+BTN_POWEROFF = pygame.Rect(255, 252, 195, 52)
+
+# Generous touch hitboxes so finger presses near the buttons trigger reliably
+HITBOX_REBOOT = pygame.Rect(10, 215, 230, 105)
+HITBOX_POWEROFF = pygame.Rect(240, 215, 230, 105)
 
 confirm_action = None
 confirm_time = 0
@@ -150,9 +159,9 @@ class Touch:
         self.down = False
         try:
             self.fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
-            self.x_rng = abs_range(self.fd, ABS_X, (0, 4095))
-            self.y_rng = abs_range(self.fd, ABS_Y, (0, 4095))
-            print(f"[touch] {path} X{self.x_rng} Y{self.y_rng}", flush=True)
+            self.x_rng = (TOUCH_MIN_X, TOUCH_MAX_X)
+            self.y_rng = (TOUCH_MIN_Y, TOUCH_MAX_Y)
+            print(f"[touch] {path} bounds X{self.x_rng} Y{self.y_rng}", flush=True)
         except Exception as e:
             print(f"[touch] cannot open {path}: {e}", file=sys.stderr)
 
@@ -309,14 +318,14 @@ def draw(temp, cpu, ram, sd, usb):
 def handle_tap(pos, now):
     """Two-step confirmation logic. Returns True if the UI must be redrawn."""
     global confirm_action, confirm_time
-    if BTN_REBOOT.collidepoint(pos):
+    if HITBOX_REBOOT.collidepoint(pos):
         print(f"[button hit] REBOOT at {pos} (confirm={confirm_action})", flush=True)
         if confirm_action == "reboot":
             confirm_action = None
             host_cmd("reboot")
         else:
             confirm_action, confirm_time = "reboot", now
-    elif BTN_POWEROFF.collidepoint(pos):
+    elif HITBOX_POWEROFF.collidepoint(pos):
         print(f"[button hit] POWEROFF at {pos} (confirm={confirm_action})", flush=True)
         if confirm_action == "poweroff":
             confirm_action = None
@@ -324,7 +333,7 @@ def handle_tap(pos, now):
         else:
             confirm_action, confirm_time = "poweroff", now
     else:
-        print(f"[tap outside buttons] pos={pos} (BTN_REBOOT={BTN_REBOOT}, BTN_POWEROFF={BTN_POWEROFF})", flush=True)
+        print(f"[tap outside buttons] pos={pos} (HITBOX_REBOOT={HITBOX_REBOOT}, HITBOX_POWEROFF={HITBOX_POWEROFF})", flush=True)
         confirm_action = None
     return True
 
