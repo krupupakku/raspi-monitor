@@ -290,7 +290,7 @@ def draw(temp, cpu, ram, sd, usb):
     screen.fill(C_BG)
 
     # CPU and GPU share one die (SoC) and one sensor, so a single reading covers both.
-    draw_metric("SoC Temp (CPU+GPU):", f"{temp:.1f} °C", level_color(temp, 60, 75), 18)
+    draw_metric("SoC Temp:", f"{temp:.1f} °C", level_color(temp, 60, 75), 18)
     draw_metric("CPU Usage:", f"{cpu:.1f} %", level_color(cpu, 70, 90), 50)
     draw_metric("RAM Usage:", f"{ram:.1f} %", level_color(ram, 70, 90), 82)
 
