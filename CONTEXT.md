@@ -8,7 +8,7 @@ Runs in Docker via `docker compose` (`start`/`stop` to enable/disable).
 ## Key Requirements
 1. **Lightweight & headless**: Linux framebuffer (`/dev/fb1` or `/dev/fb0`), no X11/Wayland. Python 3, Pygame (SDL2), `psutil`.
 2. **Metrics (refresh every 3-5 s)**: SoC temp (`/sys/class/thermal/thermal_zone0/temp`), SD root usage (`/`), USB usage (`/mnt/usb0`).
-3. **Touch & host control**: `/dev/input/eventX` mapped to container; **[ REBOOT ]** / **[ SHUTDOWN ]** buttons with two-step `CONFERMI?` (4 s timeout); host actions via D-Bus system socket to systemd (`org.freedesktop.systemd1`).
+3. **Touch & host control**: `/dev/input/eventX` mapped to container; **[ REBOOT ]** / **[ SHUTDOWN ]** buttons with two-step `CONFIRM?` (4 s timeout); host actions via D-Bus system socket to systemd (`org.freedesktop.systemd1`).
 4. **Clean exit**: handle `SIGTERM`/`SIGINT`, zero `/dev/fb1`, restore `/dev/tty1` cursor.
 5. **Aesthetics**: hacker/terminal look, monospace, ASCII bars `[====    ]`, dark palette (black, dim gray, green/amber/red).
 

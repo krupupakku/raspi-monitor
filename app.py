@@ -231,43 +231,70 @@ def get_temp():
         return 0.0
 
 
+def format_usage_bar(percent, free_bytes, length=18):
+    filled = int(round(length * percent / 100.0))
+    bar = "[" + "=" * filled + " " * (length - filled) + "]"
+    return bar, f"{percent:>4.1f}% ({free_bytes / (1024 ** 3):.1f}G free)"
+
+
 def get_disk_bar(path, length=18):
     try:
         u = psutil.disk_usage(path)
-        used_p = u.percent / 100.0
-        filled = int(round(length * used_p))
-        bar = "[" + "=" * filled + " " * (length - filled) + "]"
-        free_gb = u.free / (1024 ** 3)
-        return bar, f"{u.percent:>4.1f}% ({free_gb:.1f}G free)"
+        return format_usage_bar(u.percent, u.free, length)
     except Exception:
         return "[ OFFLINE          ]", "N/A"
 
 
-def draw(temp, sd, usb):
+def get_cpu_percent():
+    # Non-blocking: average load since the previous call (primed once in main()).
+    try:
+        return psutil.cpu_percent(interval=None)
+    except Exception:
+        return 0.0
+
+
+def get_ram_percent():
+    try:
+        return psutil.virtual_memory().percent
+    except Exception:
+        return 0.0
+
+
+def level_color(value, warn, crit):
+    return C_GREEN if value < warn else (C_WARN if value < crit else C_RED)
+
+
+VALUE_X = 235  # shared x of the single-line metric values
+
+
+def draw_metric(label, text, color, y):
+    screen.blit(font_mono.render(label, True, C_DIM), (30, y))
+    screen.blit(font_mono.render(text, True, color), (VALUE_X, y))
+
+
+def draw(temp, cpu, ram, sd, usb):
     sd_bar, sd_text = sd
     usb_bar, usb_text = usb
     screen.fill(C_BG)
 
-    hdr = font_mono.render("--- SYSTEM STATUS MONITOR [CLI] ---", True, C_GREEN)
-    screen.blit(hdr, (30, 15))
+    # CPU and GPU share one die (SoC) and one sensor, so a single reading covers both.
+    draw_metric("SoC Temp (CPU+GPU):", f"{temp:.1f} °C", level_color(temp, 60, 75), 18)
+    draw_metric("CPU Usage:", f"{cpu:.1f} %", level_color(cpu, 70, 90), 50)
+    draw_metric("RAM Usage:", f"{ram:.1f} %", level_color(ram, 70, 90), 82)
 
-    t_col = C_GREEN if temp < 60 else (C_WARN if temp < 75 else C_RED)
-    screen.blit(font_mono.render("SoC Temp :", True, C_DIM), (30, 55))
-    screen.blit(font_mono.render(f"{temp:.1f} °C", True, t_col), (160, 55))
+    screen.blit(font_mono.render("SD (/):", True, C_DIM), (30, 128))
+    screen.blit(font_mono.render(f"{sd_bar} {sd_text}", True, C_WHITE), (30, 152))
 
-    screen.blit(font_mono.render("SD (/):", True, C_DIM), (30, 95))
-    screen.blit(font_mono.render(f"{sd_bar} {sd_text}", True, C_WHITE), (30, 120))
+    screen.blit(font_mono.render("USB (/mnt/usb0):", True, C_DIM), (30, 194))
+    screen.blit(font_mono.render(f"{usb_bar} {usb_text}", True, C_WHITE), (30, 218))
 
-    screen.blit(font_mono.render("USB (/mnt/usb0):", True, C_DIM), (30, 160))
-    screen.blit(font_mono.render(f"{usb_bar} {usb_text}", True, C_WHITE), (30, 185))
-
-    rb_txt = "CONFERMI?" if confirm_action == "reboot" else "[ REBOOT ]"
+    rb_txt = "CONFIRM?" if confirm_action == "reboot" else "[ REBOOT ]"
     rb_col = C_WARN if confirm_action == "reboot" else C_DIM
     pygame.draw.rect(screen, C_FRAME, BTN_REBOOT, 1)
     lbl_r = font_btn.render(rb_txt, True, rb_col)
     screen.blit(lbl_r, lbl_r.get_rect(center=BTN_REBOOT.center))
 
-    po_txt = "CONFERMI?" if confirm_action == "poweroff" else "[ SHUTDOWN ]"
+    po_txt = "CONFIRM?" if confirm_action == "poweroff" else "[ SHUTDOWN ]"
     po_col = C_RED if confirm_action == "poweroff" else C_DIM
     pygame.draw.rect(screen, C_FRAME, BTN_POWEROFF, 1)
     lbl_p = font_btn.render(po_txt, True, po_col)
@@ -299,6 +326,7 @@ def handle_tap(pos, now):
 def main():
     global confirm_action
     touch = Touch(TOUCH_DEV)
+    get_cpu_percent()  # first call always returns 0.0; later calls average since the previous one
     last_update = 0
     metrics = None
     dirty = True
@@ -316,6 +344,8 @@ def main():
         if now - last_update >= 3 or metrics is None:
             last_update = now
             metrics = (get_temp(),
+                       get_cpu_percent(),
+                       get_ram_percent(),
                        get_disk_bar("/host/root"),
                        get_disk_bar("/host/usb0"))
             dirty = True

@@ -10,3 +10,5 @@ __pycache__/
 *.md
 LICENSE
 docker-compose*.yml
+demo/
+docs/
