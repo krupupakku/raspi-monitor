@@ -1,0 +1,23 @@
+services:
+  stats-display:
+    build: .
+    container_name: pi_stats_display
+    restart: unless-stopped
+    devices:
+      - /dev/fb1:/dev/fb1
+      - /dev/input/event0:/dev/input/event0 # Check via: cat /proc/bus/input/devices
+      - /dev/tty1:/dev/tty1
+    environment:
+      - FRAMEBUFFER_DEV=/dev/fb1
+      - TOUCH_DEVICE=/dev/input/event0
+      - SDL_VIDEODRIVER=dummy # off-screen render, pixels are written to the fb by app.py
+      # Touch calibration, adjust if taps land in the wrong place:
+      - TOUCH_SWAP_XY=0
+      - TOUCH_INVERT_X=0
+      - TOUCH_INVERT_Y=0
+    volumes:
+      - /sys/class/thermal/thermal_zone0:/host/thermal:ro
+      - /sys/class/graphics:/sys/class/graphics:ro # framebuffer geometry (bpp/stride)
+      - /:/host/root:ro
+      - /mnt/usb0:/host/usb0:ro
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket
