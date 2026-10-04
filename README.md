@@ -42,13 +42,13 @@ Set in [docker-compose.yml](docker-compose.yml):
 
 | Variable | Default | Description |
 |---|---|---|
-| `FRAMEBUFFER_DEV` | `/dev/fb1` | Framebuffer to draw on |
+| `FRAMEBUFFER_DEV` | `/dev/fb0` | Framebuffer to draw on |
 | `TOUCH_DEVICE` | `/dev/input/event0` | Touchscreen evdev node |
-| `TOUCH_SWAP_XY` | `0` | Swap X/Y axes |
-| `TOUCH_INVERT_X` | `0` | Invert X axis |
-| `TOUCH_INVERT_Y` | `0` | Invert Y axis |
+| `TOUCH_SWAP_XY` | `1` | Swap X/Y axes |
+| `TOUCH_INVERT_X` | `1` | Invert X axis |
+| `TOUCH_INVERT_Y` | `1` | Invert Y axis |
 
-If taps land in the wrong place, adjust the three touch variables. Remember to update the `devices:` entry if your touch device is not `event0`.
+Defaults are tested and calibrated for 3.5" HDMI TFT displays with XPT2046/ADS7846 touch (e.g. Kuman 3.5" HDMI Display-B v1.2, Waveshare 3.5" HDMI LCD). Adjust touch variables if your display uses a different digitizer orientation.
 
 ## Try the UI without a Raspberry Pi
 
