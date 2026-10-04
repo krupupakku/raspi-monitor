@@ -8,7 +8,7 @@ services:
       - /dev/input/event0:/dev/input/event0 # Check via: cat /proc/bus/input/devices
       - /dev/tty1:/dev/tty1
     environment:
-      - FRAMEBUFFER_DEV=/dev/fb1
+      - FRAMEBUFFER_DEV=/dev/fb0
       - TOUCH_DEVICE=/dev/input/event0
       - SDL_VIDEODRIVER=dummy # off-screen render, pixels are written to the fb by app.py
       # Touch calibration, adjust if taps land in the wrong place:
