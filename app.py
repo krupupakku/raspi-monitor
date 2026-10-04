@@ -197,7 +197,9 @@ class Touch:
                         self.down = True
                     elif value == 0 and self.down:
                         self.down = False
-                        taps.append(self._map())
+                        mapped = self._map()
+                        print(f"[touch tap] raw=({self.raw_x}, {self.raw_y}) -> mapped={mapped}", flush=True)
+                        taps.append(mapped)
         return taps
 
 
@@ -308,18 +310,21 @@ def handle_tap(pos, now):
     """Two-step confirmation logic. Returns True if the UI must be redrawn."""
     global confirm_action, confirm_time
     if BTN_REBOOT.collidepoint(pos):
+        print(f"[button hit] REBOOT at {pos} (confirm={confirm_action})", flush=True)
         if confirm_action == "reboot":
             confirm_action = None
             host_cmd("reboot")
         else:
             confirm_action, confirm_time = "reboot", now
     elif BTN_POWEROFF.collidepoint(pos):
+        print(f"[button hit] POWEROFF at {pos} (confirm={confirm_action})", flush=True)
         if confirm_action == "poweroff":
             confirm_action = None
             host_cmd("poweroff")
         else:
             confirm_action, confirm_time = "poweroff", now
     else:
+        print(f"[tap outside buttons] pos={pos} (BTN_REBOOT={BTN_REBOOT}, BTN_POWEROFF={BTN_POWEROFF})", flush=True)
         confirm_action = None
     return True
 
