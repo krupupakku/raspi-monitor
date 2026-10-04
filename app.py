@@ -161,7 +161,6 @@ class Touch:
             self.fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
             self.x_rng = (TOUCH_MIN_X, TOUCH_MAX_X)
             self.y_rng = (TOUCH_MIN_Y, TOUCH_MAX_Y)
-            print(f"[touch] {path} bounds X{self.x_rng} Y{self.y_rng}", flush=True)
         except Exception as e:
             print(f"[touch] cannot open {path}: {e}", file=sys.stderr)
 
@@ -206,9 +205,7 @@ class Touch:
                         self.down = True
                     elif value == 0 and self.down:
                         self.down = False
-                        mapped = self._map()
-                        print(f"[touch tap] raw=({self.raw_x}, {self.raw_y}) -> mapped={mapped}", flush=True)
-                        taps.append(mapped)
+                        taps.append(self._map())
         return taps
 
 
@@ -319,21 +316,18 @@ def handle_tap(pos, now):
     """Two-step confirmation logic. Returns True if the UI must be redrawn."""
     global confirm_action, confirm_time
     if HITBOX_REBOOT.collidepoint(pos):
-        print(f"[button hit] REBOOT at {pos} (confirm={confirm_action})", flush=True)
         if confirm_action == "reboot":
             confirm_action = None
             host_cmd("reboot")
         else:
             confirm_action, confirm_time = "reboot", now
     elif HITBOX_POWEROFF.collidepoint(pos):
-        print(f"[button hit] POWEROFF at {pos} (confirm={confirm_action})", flush=True)
         if confirm_action == "poweroff":
             confirm_action = None
             host_cmd("poweroff")
         else:
             confirm_action, confirm_time = "poweroff", now
     else:
-        print(f"[tap outside buttons] pos={pos} (HITBOX_REBOOT={HITBOX_REBOOT}, HITBOX_POWEROFF={HITBOX_POWEROFF})", flush=True)
         confirm_action = None
     return True
 
